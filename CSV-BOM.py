@@ -42,6 +42,7 @@ class BOMCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
 		_includeMass = False
 		_includeDensity = False
 		_includeMaterial = False
+		_includeDesc = False
 		if lastPrefs:
 			try:
 				lastPrefs = json.loads(lastPrefs.value)
@@ -57,6 +58,7 @@ class BOMCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
 				_includeMass = lastPrefs["incMass"]
 				_includeDensity = lastPrefs["incDensity"]
 				_includeMaterial = lastPrefs["incMaterial"]
+				_includeDesc = lastPrefs["incDesc"]
 			except:
 				ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
 				return
@@ -111,6 +113,15 @@ class BOMCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
 		ipIncludeMaterial = grpPhysicsChildren.addBoolValueInput(cmdId + "_includeMaterial", "Include material", True, "", _includeMaterial)
 		ipIncludeMaterial.tooltip = "Include component physical material"
 
+		grpMisc = inputs.addGroupCommandInput(cmdId + "_grpMisc", "Misc")
+		if _includeDesc is True:
+			grpMisc.isExpanded = True
+		else:
+			grpMisc.isExpanded = False
+		grpMiscChildren = grpMisc.children
+		ipCompDesc = grpMiscChildren.addBoolValueInput(cmdId + "_includeCompDesc", "Include description", True, "", _includeDesc)
+		ipCompDesc.tooltip = "Includes the component description. You can add a description<br/>by right clicking a component and open the Properties panel."
+
 		# Connect to the execute event.
 		onExecute = BOMCommandExecuteHandler()
 		cmd.execute.add(onExecute)
@@ -142,6 +153,8 @@ class BOMCommandExecuteHandler(adsk.core.CommandEventHandler):
 			csvHeader.insert(len(csvHeader), "Density kg/cm^2")
 		if prefs["incMaterial"]:
 			csvHeader.insert(len(csvHeader), "Material")
+		if prefs["incDesc"]:
+			csvHeader.insert(len(csvHeader), "Description")
 		for k in csvHeader:
 			csvStr += k + ';'
 		csvStr += '\n'
@@ -173,6 +186,8 @@ class BOMCommandExecuteHandler(adsk.core.CommandEventHandler):
 				csvStr += str("{0:.5f}".format(item["density"])) + ';'
 			if prefs["incMaterial"]:
 				csvStr += item["material"] + ';'
+			if prefs["incDesc"]:
+				csvStr += item["desc"] + ';'
 			csvStr += '\n'
 		return csvStr
 
@@ -189,7 +204,8 @@ class BOMCommandExecuteHandler(adsk.core.CommandEventHandler):
 			"incArea": inputs.itemById(cmdId + "_includeArea").value,
 			"incMass": inputs.itemById(cmdId + "_includeMass").value,
 			"incDensity": inputs.itemById(cmdId + "_includeDensity").value,
-			"incMaterial": inputs.itemById(cmdId + "_includeMaterial").value
+			"incMaterial": inputs.itemById(cmdId + "_includeMaterial").value,
+			"incDesc": inputs.itemById(cmdId + "_includeCompDesc").value
 		}
 		return obj
 
@@ -349,7 +365,8 @@ class BOMCommandExecuteHandler(adsk.core.CommandEventHandler):
 							"area": self.getPhysicsArea(comp.bRepBodies),
 							"mass": self.getPhysicalMass(comp.bRepBodies),
 							"density": self.getPhysicalDensity(comp.bRepBodies),
-							"material": self.getPhysicalMaterial(comp.bRepBodies)
+							"material": self.getPhysicalMaterial(comp.bRepBodies),
+							"desc": comp.description
 						})
 			csvStr = self.collectData(design, bom, prefs)
 			output = open(filename, 'w')
