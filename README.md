@@ -47,7 +47,9 @@ After [installation](#installation), go to the toolbar "Create" submenu and choo
 * **Include material**
 > Includes the material names as an comma seperated list for all bodies at first level whithin a component.
 
-## Installation <a id="installation"></a>
+<a id="installation"></a>
+
+## Installation
 
 1. Checkout the repository from Github or get the ZIP-package [here](http://www.github.de/macmanpb/CSV-BOM/archive/master.zip)
 2. If you have checked out the repo, you can skip point 3
