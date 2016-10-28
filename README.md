@@ -52,6 +52,7 @@ After [installation](#installation), go to the toolbar "Create" submenu and choo
 * **Include description**
 > Includes the component description. To edit, right click on a component and select _Properties_ in the submenu.
 
+---
 
 <a id="installation"></a>
 
