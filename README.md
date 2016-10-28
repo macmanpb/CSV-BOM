@@ -19,7 +19,7 @@ After installation, go to the toolbar "Create" submenu and choose "Create BOM". 
 > If you deselect this option another option comes up which is descripted next.
 
 	* **Strip "_"**
-	> You want underscore signed components too? No problem, but you dont want the underscore in the outputted component name? Then this option is right for you. It strippes the underscore away.
+>> You want underscore signed components too? No problem, but you dont want the underscore in the outputted component name? Then this option is right for you. It strippes the underscore away.
 
 * **Exclude if no bodies**
 > Components without a body makes no sense. Activate this option to ignore them.
