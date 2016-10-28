@@ -2,7 +2,7 @@
 Creates a bill of material from the browser components tree in Autodesk Fusion360.
 
 ## General Usage Instructions
-After installation, go to the toolbar "Create" submenu and choose "Create BOM". A dialog appears which shows provided options to control the CSV output. Click OK and a save file dialog comes up. Name your file and click OK. After creating the file a message box popups with the information that the file has successfully created. Open a suitable app which can handle CSV formatted files. Import the CSV file and voila the BOM of your design is showing.
+After [installation](#installation), go to the toolbar "Create" submenu and choose "Create BOM". A dialog appears which shows provided options to control the CSV output. Click OK and a save file dialog comes up. Name your file and click OK. After creating the file a message box popups with the information that the file has successfully created. Open a suitable app which can handle CSV formatted files. Import the CSV file and voila the BOM of your design is showing.
 
 ### Supportet options
 
@@ -47,7 +47,7 @@ After installation, go to the toolbar "Create" submenu and choose "Create BOM". 
 * **Include material**
 > Includes the material names as an comma seperated list for all bodies at first level whithin a component.
 
-## Installation
+## Installation <a id="installation"></a>
 
 1. Checkout the repository from Github or get the ZIP-package [here](http://www.github.de/macmanpb/CSV-BOM/archive/master.zip)
 2. If you have checked out the repo, you can skip point 3
