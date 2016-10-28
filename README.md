@@ -47,6 +47,11 @@ After [installation](#installation), go to the toolbar "Create" submenu and choo
 * **Include material**
 > Includes the material names as an comma seperated list for all bodies at first level whithin a component.
 
+### Misc
+
+* **Include description**
+> Includes the component description. To edit, right click on a component and select _Properties_ in the submenu.
+
 <a id="installation"></a>
 
 ## Installation
