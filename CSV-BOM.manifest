@@ -1,0 +1,13 @@
+{
+	"autodeskProduct":	"Fusion360",
+	"type":	"addin",
+	"id":	"9c8e9f4a-c313-41db-92ed-a2ffbbd3d9ce",
+	"author":	"Peter Böker",
+	"description":	{
+		"":	"Generates BOM output in CSV format. Several options are provided."
+	},
+	"version":	"rel-0-4-1",
+	"runOnStartup":	true,
+	"supportedOS":	"windows|mac",
+	"editEnabled":	true
+}
