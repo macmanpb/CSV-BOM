@@ -50,7 +50,7 @@ After [installation](#installation), go to the toolbar "Create" submenu and choo
 ### Misc
 
 * **Include description**
-> Includes the component description. To edit, right click on a component and select _Properties_ in the submenu.
+> Includes the component description. To edit, right click on a component and select Properties in the submenu.
 
 
 ---
