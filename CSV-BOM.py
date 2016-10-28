@@ -6,6 +6,7 @@ import adsk.fusion
 import adsk.cam
 import traceback
 import json
+import re
 
 # Global list to keep all event handlers in scope.
 # This is only needed with Python.
@@ -146,7 +147,7 @@ class BOMCommandExecuteHandler(adsk.core.CommandEventHandler):
 		csvStr += '\n'
 		for item in bom:
 			dims = ''
-			name = item["name"]
+			name = self.filterFusionCompNameInserts(item["name"])
 			if prefs["ignoreUnderscorePrefComp"] is False and prefs["underscorePrefixStrip"] is True and name[0] == '_':
 				name = name[1:]
 			csvStr += '"' + name + '";' + str(item["instances"]) + ';'
@@ -255,6 +256,12 @@ class BOMCommandExecuteHandler(adsk.core.CommandEventHandler):
 				if mat not in matList:
 					matList.append(mat)
 		return ', '.join(matList)
+
+	def filterFusionCompNameInserts(self, name):
+		name = re.sub("\([0-9]+\)$", '', name)
+		name = name.strip()
+		name = re.sub("v[0-9]+$", '', name)
+		return name.strip()
 
 	def notify(self, args):
 		global app
