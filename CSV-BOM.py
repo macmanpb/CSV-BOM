@@ -46,19 +46,19 @@ class BOMCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
 		if lastPrefs:
 			try:
 				lastPrefs = json.loads(lastPrefs.value)
-				_onlySelectedComps = lastPrefs["onlySelComp"]
-				_includeBoundingboxDims = lastPrefs["incBoundDims"]
-				_ignoreUnderscorePrefixedComps = lastPrefs["ignoreUnderscorePrefComp"]
-				_underscorePrefixStrip = lastPrefs["underscorePrefixStrip"]
-				_ignoreCompsWithoutBodies = lastPrefs["ignoreCompWoBodies"]
-				_ignoreLinkedComps = lastPrefs["ignoreLinkedComp"]
-				_ignoreVisibleState = lastPrefs["ignoreVisibleState"]
-				_includeVolume = lastPrefs["incVol"]
-				_includeArea = lastPrefs["incArea"]
-				_includeMass = lastPrefs["incMass"]
-				_includeDensity = lastPrefs["incDensity"]
-				_includeMaterial = lastPrefs["incMaterial"]
-				_includeDesc = lastPrefs["incDesc"]
+				_onlySelectedComps = getattr(lastPrefs, "onlySelComp", False)
+				_includeBoundingboxDims = getattr(lastPrefs, "incBoundDims", False)
+				_ignoreUnderscorePrefixedComps = getattr(lastPrefs, "ignoreUnderscorePrefComp", False)
+				_underscorePrefixStrip = getattr(lastPrefs, "underscorePrefixStrip", False)
+				_ignoreCompsWithoutBodies = getattr(lastPrefs, "ignoreCompWoBodies", False)
+				_ignoreLinkedComps = getattr(lastPrefs, "ignoreLinkedComp", False)
+				_ignoreVisibleState = getattr(lastPrefs, "ignoreVisibleState", False)
+				_includeVolume = getattr(lastPrefs, "incVol", False)
+				_includeArea = getattr(lastPrefs, "incArea", False)
+				_includeMass = getattr(lastPrefs, "incMass", False)
+				_includeDensity = getattr(lastPrefs, "incDensity", False)
+				_includeMaterial = getattr(lastPrefs, "incMaterial", False)
+				_includeDesc = getattr(lastPrefs, "incDesc", False)
 			except:
 				ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
 				return
