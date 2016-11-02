@@ -77,10 +77,7 @@ class BOMCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
 
 		ipUnderscorePrefixStrip = inputs.addBoolValueInput(cmdId + "_underscorePrefixStrip", 'Strip "_"', True, "", _underscorePrefixStrip)
 		ipUnderscorePrefixStrip.tooltip = 'If checked, "_" is stripped from components name'
-		if _ignoreUnderscorePrefixedComps is True:
-			ipUnderscorePrefixStrip.isVisible = False
-		else:
-			ipUnderscorePrefixStrip.isVisible = True
+		ipUnderscorePrefixStrip.isVisible = not _ignoreUnderscorePrefixedComps
 
 		ipWoBodies = inputs.addBoolValueInput(cmdId + "_ignoreCompsWithoutBodies", "Exclude if no bodies", True, "", _ignoreCompsWithoutBodies)
 		ipWoBodies.tooltip = "Exclude all components if they have at least one body"
@@ -92,7 +89,7 @@ class BOMCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
 		ipVisibleState.tooltip = "Ignores the visible state for components"
 
 		grpPhysics = inputs.addGroupCommandInput(cmdId + "_grpPhysics", "Additional Physics")
-		if _includeVolume is True or _includeArea is True or _includeMass is True or _includeDensity is True or _includeMaterial is True:
+		if _includeVolume or _includeArea or _includeMass or _includeDensity or _includeMaterial:
 			grpPhysics.isExpanded = True
 		else:
 			grpPhysics.isExpanded = False
@@ -114,10 +111,8 @@ class BOMCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
 		ipIncludeMaterial.tooltip = "Include component physical material"
 
 		grpMisc = inputs.addGroupCommandInput(cmdId + "_grpMisc", "Misc")
-		if _includeDesc is True:
-			grpMisc.isExpanded = True
-		else:
-			grpMisc.isExpanded = False
+		grpMisc.isExpanded = _includeDesc
+
 		grpMiscChildren = grpMisc.children
 		ipCompDesc = grpMiscChildren.addBoolValueInput(cmdId + "_includeCompDesc", "Include description", True, "", _includeDesc)
 		ipCompDesc.tooltip = "Includes the component description. You can add a description<br/>by right clicking a component and open the Properties panel."
@@ -142,19 +137,19 @@ class BOMCommandExecuteHandler(adsk.core.CommandEventHandler):
 		defaultUnit = design.fusionUnitsManager.defaultLengthUnits
 		csvHeader = ["Part name", "Amount"]
 		if prefs["incVol"]:
-			csvHeader.insert(len(csvHeader), "Volume")
+			csvHeader.append("Volume")
 		if prefs["incBoundDims"]:
-			csvHeader.insert(len(csvHeader), "Dimension " + defaultUnit)
+			csvHeader.append("Dimension " + defaultUnit)
 		if prefs["incArea"]:
-			csvHeader.insert(len(csvHeader), "Area cm^2")
+			csvHeader.append("Area cm^2")
 		if prefs["incMass"]:
-			csvHeader.insert(len(csvHeader), "Mass kg")
+			csvHeader.append("Mass kg")
 		if prefs["incDensity"]:
-			csvHeader.insert(len(csvHeader), "Density kg/cm^2")
+			csvHeader.append("Density kg/cm^2")
 		if prefs["incMaterial"]:
-			csvHeader.insert(len(csvHeader), "Material")
+			csvHeader.append("Material")
 		if prefs["incDesc"]:
-			csvHeader.insert(len(csvHeader), "Description")
+			csvHeader.append("Description")
 		for k in csvHeader:
 			csvStr += k + ';'
 		csvStr += '\n'
@@ -174,16 +169,16 @@ class BOMCommandExecuteHandler(adsk.core.CommandEventHandler):
 					bbX = "{0:.3f}".format(float(design.fusionUnitsManager.formatInternalValue(item["boundingBox"]["x"], defaultUnit, False)))
 					bbY = "{0:.3f}".format(float(design.fusionUnitsManager.formatInternalValue(item["boundingBox"]["y"], defaultUnit, False)))
 					bbZ = "{0:.3f}".format(float(design.fusionUnitsManager.formatInternalValue(item["boundingBox"]["z"], defaultUnit, False)))
-					dims += str(bbX) + ' x '
-					dims += str(bbY) + ' x '
-					dims += str(bbZ)
+					dims += bbX + ' x '
+					dims += bbY + ' x '
+					dims += bbZ
 				csvStr += dims + ';'
 			if prefs["incArea"]:
-				csvStr += str("{0:.2f}".format(item["area"])) + ';'
+				csvStr += "{0:.2f}".format(item["area"]) + ';'
 			if prefs["incMass"]:
-				csvStr += str("{0:.5f}".format(item["mass"])) + ';'
+				csvStr += "{0:.5f}".format(item["mass"]) + ';'
 			if prefs["incDensity"]:
-				csvStr += str("{0:.5f}".format(item["density"])) + ';'
+				csvStr += "{0:.5f}".format(item["density"]) + ';'
 			if prefs["incMaterial"]:
 				csvStr += item["material"] + ';'
 			if prefs["incDesc"]:
