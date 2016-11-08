@@ -135,7 +135,7 @@ class BOMCommandExecuteHandler(adsk.core.CommandEventHandler):
 	def collectData(self, design, bom, prefs):
 		csvStr = ''
 		defaultUnit = design.fusionUnitsManager.defaultLengthUnits
-		csvHeader = ["Part name", "Amount"]
+		csvHeader = ["Part name", "Quantity"]
 		if prefs["incVol"]:
 			csvHeader.append("Volume")
 		if prefs["incBoundDims"]:
