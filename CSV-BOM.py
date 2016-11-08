@@ -18,7 +18,7 @@ cmdId = "CSVBomAddInMenuEntry"
 cmdName = "CSV-BOM"
 dialogTitle = "Create BOM"
 cmdDesc = "Creates a bill of material from the browser components."
-cmdRes = ".//ressources//CSV-BOM"
+cmdRes = ".//resources//CSV-BOM"
 
 # Event handler for the commandCreated event.
 class BOMCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
