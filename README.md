@@ -6,7 +6,7 @@ After [installation](#installation), go to the toolbar "Create" submenu and choo
 
 ### Supportet options
 
-![](ressources/CSV-BOM/store_screen.png)
+![](resources/CSV-BOM/store_screen.png)
 
 * **Selected only**
 > Means that only selected components will be exported to CSV.
@@ -66,22 +66,22 @@ After [installation](#installation), go to the toolbar "Create" submenu and choo
 3. Extract the content of the downloaded ZIP to a preferred location
 4. Open Fusion360 and load the Add-Ins dialog
 
-	![Toolbar top right](ressources/CSV-BOM/toolbar.png)
+	![Toolbar top right](resources/CSV-BOM/toolbar.png)
 
 5. To add the CSV-BOM Add-In, click on the Add-Ins tab and then on the small plus icon.
 
-	![Add-Ins dialog](ressources/CSV-BOM/addins_dialog.png)
+	![Add-Ins dialog](resources/CSV-BOM/addins_dialog.png)
 
 6. Locate the unzipped _CSV-BOM-master_ folder, open it and choose _CSV-BOM.py_ and click **OK**
 
 7. The Add-In is now listed but not running. Select the _CSV-BOM_ entry, activate _Run on Startup_ and click _Run_
 
-	![Add-In in the list](ressources/CSV-BOM/addins-dialog-listed.png)
+	![Add-In in the list](resources/CSV-BOM/addins-dialog-listed.png)
 
 After _Run_ was clicked the Add-Ins dialog closes automatically.
 Check the _Create_ toolbar panel! CSV-BOM is ready to use ;-)
 
-![](ressources/CSV-BOM/create_panel.png)
+![](resources/CSV-BOM/create_panel.png)
 
 
 
