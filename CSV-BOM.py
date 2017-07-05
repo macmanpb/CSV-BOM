@@ -11,7 +11,6 @@ import re
 # Global list to keep all event handlers in scope.
 # This is only needed with Python.
 handlers = []
-
 app = adsk.core.Application.get()
 ui = app.userInterface
 cmdId = "CSVBomAddInMenuEntry"
@@ -32,6 +31,7 @@ class BOMCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
 		lastPrefs = design.attributes.itemByName(cmdId, "lastUsedOptions")
 		_onlySelectedComps = False
 		_includeBoundingboxDims = True
+		_splitDims = True
 		_ignoreUnderscorePrefixedComps = True
 		_underscorePrefixStrip = False
 		_ignoreCompsWithoutBodies = True
@@ -43,11 +43,13 @@ class BOMCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
 		_includeDensity = False
 		_includeMaterial = False
 		_includeDesc = False
+		_useComma = False
 		if lastPrefs:
 			try:
 				lastPrefs = json.loads(lastPrefs.value)
 				_onlySelectedComps = lastPrefs.get("onlySelComp", False)
 				_includeBoundingboxDims = lastPrefs.get("incBoundDims", True)
+				_splitDims = lastPrefs.get("splitDims", True)
 				_ignoreUnderscorePrefixedComps = lastPrefs.get("ignoreUnderscorePrefComp", True)
 				_underscorePrefixStrip = lastPrefs.get("underscorePrefixStrip", False)
 				_ignoreCompsWithoutBodies = lastPrefs.get("ignoreCompWoBodies", True)
@@ -59,6 +61,7 @@ class BOMCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
 				_includeDensity = lastPrefs.get("incDensity", False)
 				_includeMaterial = lastPrefs.get("incMaterial", False)
 				_includeDesc = lastPrefs.get("incDesc", False)
+				_useComma = lastPrefs.get("useComma", False)
 			except:
 				ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
 				return
@@ -71,6 +74,10 @@ class BOMCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
 
 		ipBoundingBox = inputs.addBoolValueInput(cmdId + "_includeBoundingboxDims", "Include dimension", True, "", _includeBoundingboxDims)
 		ipBoundingBox.tooltip = "Will include the bounding box dimensions of all bodies related the parent component."
+
+		ipSplitDims = inputs.addBoolValueInput(cmdId + "_splitDims", "Separate dimension", True, "", _splitDims)
+		ipSplitDims.tooltip = "Places the dimension values in separate CVS output columns."
+		ipSplitDims.isVisible = _includeBoundingboxDims
 
 		ipUnderscorePrefix = inputs.addBoolValueInput(cmdId + "_ignoreUnderscorePrefixedComps", 'Exclude "_"', True, "", _ignoreUnderscorePrefixedComps)
 		ipUnderscorePrefix.tooltip = 'Exclude all components there name starts with "_"'
@@ -111,11 +118,16 @@ class BOMCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
 		ipIncludeMaterial.tooltip = "Include component physical material"
 
 		grpMisc = inputs.addGroupCommandInput(cmdId + "_grpMisc", "Misc")
-		grpMisc.isExpanded = _includeDesc
-
+		if (_includeDesc or _useComma):
+			grpMisc.isExpanded = True
+		else:
+			grpMisc.isExpanded = False
 		grpMiscChildren = grpMisc.children
 		ipCompDesc = grpMiscChildren.addBoolValueInput(cmdId + "_includeCompDesc", "Include description", True, "", _includeDesc)
 		ipCompDesc.tooltip = "Includes the component description. You can add a description<br/>by right clicking a component and open the Properties panel."
+
+		ipUseComma = grpMiscChildren.addBoolValueInput(cmdId + "_useComma", "Use comma delimiter", True, "", _useComma)
+		ipUseComma.tooltip = "Uses comma instead of point for number decimal delimiter."
 
 		# Connect to the execute event.
 		onExecute = BOMCommandExecuteHandler()
@@ -132,14 +144,25 @@ class BOMCommandExecuteHandler(adsk.core.CommandEventHandler):
 	global cmdId
 	def __init__(self):
 		super().__init__()
+
+	def replacePointDelimterOnPref(self, pref, value):
+		if (pref):
+			return str(value).replace(".", ",")
+		return str(value)
+
 	def collectData(self, design, bom, prefs):
 		csvStr = ''
 		defaultUnit = design.fusionUnitsManager.defaultLengthUnits
 		csvHeader = ["Part name", "Quantity"]
 		if prefs["incVol"]:
-			csvHeader.append("Volume")
+			csvHeader.append("Volume cm^3")
 		if prefs["incBoundDims"]:
-			csvHeader.append("Dimension " + defaultUnit)
+			if prefs["splitDims"]:
+				csvHeader.append("Width " + defaultUnit)
+				csvHeader.append("Length " + defaultUnit)
+				csvHeader.append("Height " + defaultUnit)
+			else:
+				csvHeader.append("Dimension " + defaultUnit)
 		if prefs["incArea"]:
 			csvHeader.append("Area cm^2")
 		if prefs["incMass"]:
@@ -158,9 +181,9 @@ class BOMCommandExecuteHandler(adsk.core.CommandEventHandler):
 			name = self.filterFusionCompNameInserts(item["name"])
 			if prefs["ignoreUnderscorePrefComp"] is False and prefs["underscorePrefixStrip"] is True and name[0] == '_':
 				name = name[1:]
-			csvStr += '"' + name + '";' + str(item["instances"]) + ';'
+			csvStr += '"' + name + '";"' + self.replacePointDelimterOnPref(prefs["useComma"], item["instances"]) + '";'
 			if prefs["incVol"]:
-				csvStr += str(item["volume"]) + ';'
+				csvStr += '"' + self.replacePointDelimterOnPref(prefs["useComma"], item["volume"]) + '";'
 			if prefs["incBoundDims"]:
 				dim = 0
 				for k in item["boundingBox"]:
@@ -169,20 +192,32 @@ class BOMCommandExecuteHandler(adsk.core.CommandEventHandler):
 					bbX = "{0:.3f}".format(float(design.fusionUnitsManager.formatInternalValue(item["boundingBox"]["x"], defaultUnit, False)))
 					bbY = "{0:.3f}".format(float(design.fusionUnitsManager.formatInternalValue(item["boundingBox"]["y"], defaultUnit, False)))
 					bbZ = "{0:.3f}".format(float(design.fusionUnitsManager.formatInternalValue(item["boundingBox"]["z"], defaultUnit, False)))
-					dims += bbX + ' x '
-					dims += bbY + ' x '
-					dims += bbZ
-				csvStr += dims + ';'
+					if prefs["splitDims"]:
+						csvStr += '"' + self.replacePointDelimterOnPref(prefs["useComma"], bbX) + '";'
+						csvStr += '"' + self.replacePointDelimterOnPref(prefs["useComma"], bbY) + '";'
+						csvStr += '"' + self.replacePointDelimterOnPref(prefs["useComma"], bbZ) + '";'
+					else:
+						dims += '"' + self.replacePointDelimterOnPref(prefs["useComma"], bbX) + ' x '
+						dims += self.replacePointDelimterOnPref(prefs["useComma"], bbY) + ' x '
+						dims += self.replacePointDelimterOnPref(prefs["useComma"], bbZ)
+						csvStr += dims + '";'
+				else:
+					if prefs["splitDims"]:
+						csvStr += "0" + ';'
+						csvStr += "0" + ';'
+						csvStr += "0" + ';'
+					else:
+						csvStr += "0" + ';'
 			if prefs["incArea"]:
-				csvStr += "{0:.2f}".format(item["area"]) + ';'
+				csvStr += '"' + self.replacePointDelimterOnPref(prefs["useComma"], "{0:.2f}".format(item["area"])) + '";'
 			if prefs["incMass"]:
-				csvStr += "{0:.5f}".format(item["mass"]) + ';'
+				csvStr += '"' + self.replacePointDelimterOnPref(prefs["useComma"], "{0:.5f}".format(item["mass"])) + '";'
 			if prefs["incDensity"]:
-				csvStr += "{0:.5f}".format(item["density"]) + ';'
+				csvStr += '"' + self.replacePointDelimterOnPref(prefs["useComma"], "{0:.5f}".format(item["density"])) + '";'
 			if prefs["incMaterial"]:
-				csvStr += item["material"] + ';'
+				csvStr += '"' + item["material"] + '";'
 			if prefs["incDesc"]:
-				csvStr += item["desc"] + ';'
+				csvStr += '"' + item["desc"] + '";'
 			csvStr += '\n'
 		return csvStr
 
@@ -190,6 +225,7 @@ class BOMCommandExecuteHandler(adsk.core.CommandEventHandler):
 		obj = {
 			"onlySelComp": inputs.itemById(cmdId + "_onlySelectedComps").value,
 			"incBoundDims": inputs.itemById(cmdId + "_includeBoundingboxDims").value,
+			"splitDims": inputs.itemById(cmdId + "_splitDims").value,
 			"ignoreUnderscorePrefComp": inputs.itemById(cmdId + "_ignoreUnderscorePrefixedComps").value,
 			"underscorePrefixStrip": inputs.itemById(cmdId + "_underscorePrefixStrip").value,
 			"ignoreCompWoBodies": inputs.itemById(cmdId + "_ignoreCompsWithoutBodies").value,
@@ -200,7 +236,8 @@ class BOMCommandExecuteHandler(adsk.core.CommandEventHandler):
 			"incMass": inputs.itemById(cmdId + "_includeMass").value,
 			"incDensity": inputs.itemById(cmdId + "_includeDensity").value,
 			"incMaterial": inputs.itemById(cmdId + "_includeMaterial").value,
-			"incDesc": inputs.itemById(cmdId + "_includeCompDesc").value
+			"incDesc": inputs.itemById(cmdId + "_includeCompDesc").value,
+			"useComma": inputs.itemById(cmdId + "_useComma").value
 		}
 		return obj
 
@@ -211,28 +248,75 @@ class BOMCommandExecuteHandler(adsk.core.CommandEventHandler):
 				volume += bodyK.volume
 		return volume
 
+	# Calculates a tight bounding box around the input body.  An optional
+	# tolerance argument is available.  This specificies the tolerance in
+	# centimeters.  If not provided the best existing display mesh is used.
+	def calculateTightBoundingBox(self, body, tolerance = 0):
+		try:
+			# If the tolerance is zero, use the best display mesh available.
+			if tolerance <= 0:
+				# Get the best display mesh available.
+				triMesh = body.meshManager.displayMeshes.bestMesh
+			else:
+				# Calculate a new mesh based on the input tolerance.
+				meshMgr = adsk.fusion.MeshManager.cast(body.meshManager)
+				meshCalc = meshMgr.createMeshCalculator()
+				meshCalc.surfaceTolerance = tolerance
+				triMesh = meshCalc.calculate()
+
+			# Calculate the range of the mesh.
+			smallPnt = adsk.core.Point3D.cast(triMesh.nodeCoordinates[0])
+			largePnt = adsk.core.Point3D.cast(triMesh.nodeCoordinates[0])
+			vertex = adsk.core.Point3D.cast(None)
+			for vertex in triMesh.nodeCoordinates:
+				if vertex.x < smallPnt.x:
+					smallPnt.x = vertex.x
+
+				if vertex.y < smallPnt.y:
+					smallPnt.y = vertex.y
+
+				if vertex.z < smallPnt.z:
+					smallPnt.z = vertex.z
+
+				if vertex.x > largePnt.x:
+					largePnt.x = vertex.x
+
+				if vertex.y > largePnt.y:
+					largePnt.y = vertex.y
+
+				if vertex.z > largePnt.z:
+					largePnt.z = vertex.z
+
+			# Create and return a BoundingBox3D as the result.
+			return(adsk.core.BoundingBox3D.create(smallPnt, largePnt))
+		except:
+			# An error occurred so return None.
+			return(None)
+
 	def getBodiesBoundingBox(self, bodies):
 		minPointX = maxPointX = minPointY = maxPointY = minPointZ = maxPointZ = 0
 		# Examining the maximum min point distance and the maximum max point distance.
 		for body in bodies:
 			if body.isSolid:
-				if not minPointX or body.boundingBox.minPoint.x < minPointX:
-					minPointX = body.boundingBox.minPoint.x
-				if not maxPointX or body.boundingBox.maxPoint.x > maxPointX:
-					maxPointX = body.boundingBox.maxPoint.x
-				if not minPointY or body.boundingBox.minPoint.y < minPointY:
-					minPointY = body.boundingBox.minPoint.y
-				if not maxPointY or body.boundingBox.maxPoint.y > maxPointY:
-					maxPointY = body.boundingBox.maxPoint.y
-				if not minPointZ or body.boundingBox.minPoint.z < minPointZ:
-					minPointZ = body.boundingBox.minPoint.z
-				if not maxPointZ or body.boundingBox.maxPoint.z > maxPointZ:
-					maxPointZ = body.boundingBox.maxPoint.z
+				bb = self.calculateTightBoundingBox(body, 0)
+				if not minPointX or bb.minPoint.x < minPointX:
+					minPointX = bb.minPoint.x
+				if not maxPointX or bb.maxPoint.x > maxPointX:
+					maxPointX = bb.maxPoint.x
+				if not minPointY or bb.minPoint.y < minPointY:
+					minPointY = bb.minPoint.y
+				if not maxPointY or bb.maxPoint.y > maxPointY:
+					maxPointY = bb.maxPoint.y
+				if not minPointZ or bb.minPoint.z < minPointZ:
+					minPointZ = bb.minPoint.z
+				if not maxPointZ or bb.maxPoint.z > maxPointZ:
+					maxPointZ = bb.maxPoint.z
 		return {
 			"x": maxPointX - minPointX,
 			"y": maxPointY - minPointY,
 			"z": maxPointZ - minPointZ
 		}
+
 
 	def getPhysicsArea(self, bodies):
 		area = 0
@@ -384,6 +468,11 @@ class BOMCommandInputChangedHandler(adsk.core.InputChangedEventHandler):
 		global cmdId
 		command = args.firingEvent.sender
 		inputs = command.commandInputs
+		if inputs.itemById(cmdId + "_includeBoundingboxDims").value is True:
+			inputs.itemById(cmdId + "_splitDims").isVisible = True
+		else:
+			inputs.itemById(cmdId + "_splitDims").isVisible = False
+
 		if inputs.itemById(cmdId + "_ignoreUnderscorePrefixedComps").value is True:
 			inputs.itemById(cmdId + "_underscorePrefixStrip").isVisible = False
 		else:
