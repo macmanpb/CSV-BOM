@@ -14,6 +14,9 @@ After [installation](#installation), go to the toolbar "Create" submenu and choo
 * **Include dimension**
 > Exports the accumulated bounding box dimension of all solid bodies on first level whithin a component.
 
+* **Separate dimensions**
+> Places the dimension values in separate CVS output columns.
+
 * **Exclude "_"**
 > Often users sign components with an underscore to make them visually for internal use. This option ignores such signed components.
 > If you deselect this option another option comes up which is descripted next.
@@ -51,6 +54,10 @@ After [installation](#installation), go to the toolbar "Create" submenu and choo
 
 * **Include description**
 > Includes the component description. To edit, right click on a component and select _Properties_ in the submenu.
+
+* **Use comma delimiter**
+> If checked CSV-BOM will replace the dot decimal delimiter with a comma. This is useful for all countries that uses a comma for float decimal delimiters.
+> As a benefit of that option, Applications like Apple Numbers, MS-Excel or OpenOffice can handle these CSV-entries as native numbers instead of simple text.
 
 * ...
 
