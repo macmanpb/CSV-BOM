@@ -17,6 +17,11 @@ After [installation](#installation), go to the toolbar "Create" submenu and choo
 * **Separate dimensions**
 > Places the dimension values in separate CVS output columns.
 
+* **Sort Dimensions**
+> If you are cutting your parts out of any kind of panelized material (i.e. plywood), you want the height of the part usually be the thickness of your material. 
+If you select this option, the dimensions are sorted to accommodate this, no matter how your part is oriented in your model. 
+The smallest value becomes the height (thickness), the next larger the width and the largest the length.
+
 * **Exclude "_"**
 > Often users sign components with an underscore to make them visually for internal use. This option ignores such signed components.
 > If you deselect this option another option comes up which is descripted next.
