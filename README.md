@@ -1,8 +1,9 @@
 # CSV-BOM
-Creates a bill of material from the browser components tree in Autodesk Fusion360.
+Creates a bill of material and cut lists from the browser components tree in Autodesk Fusion360.
 
 ## General Usage Instructions
 After [installation](#installation), go to the toolbar "Create" submenu and choose "Create BOM". A dialog appears which shows provided options to control the CSV output. Click OK and a save file dialog comes up. Name your file and click OK. After creating the file a message box popups with the information that the file has successfully created. Open a suitable app which can handle CSV formatted files. Import the CSV file and voila the BOM of your design is showing.
+There is also an option to generate cut lists for woodworking projects. They can be used in conjunction with a software by [Gary Darby](http://www.delphiforfun.org/Programs/CutList.htm) to optimize panel use.
 
 ### Supportet options
 
@@ -58,8 +59,8 @@ The smallest value becomes the height (thickness), the next larger the width and
 ### Cut List
 
 * **Generate Cut List**
-> Generates a file that can be used in the [cut list optimization software by Gary Darby] 
-(http://www.delphiforfun.org/Programs/CutList.htm). This is especially helpful in woodworking projects and allows to optimize panel use.
+> Generates a file that can be used in the [cut list optimization software by Gary Darby](http://www.delphiforfun.org/Programs/CutList.htm). 
+This is especially helpful in woodworking projects and allows to optimize panel use.
 The file is saved under the same name as the BOM but with a "_cutList.txt" ending.
 Note: If the cut list software is not able to read your dimensions properly, try changing the option "Use comma delimiter" in CSV-BOM (see below).
 
