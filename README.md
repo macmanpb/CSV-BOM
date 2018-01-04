@@ -63,10 +63,10 @@ The smallest value becomes the height (thickness), the next larger the width and
 This is especially helpful in woodworking projects and allows to optimize panel use.
 The file is saved under the same name as the BOM but with a "_cutList.txt" ending.
 
-![Example Cut List/Panel Optimization](resources/CSV-BOM/cutlist.png)  
-Example Cut List/Panel Optimization
+> ![Example Cut List/Panel Optimization](resources/CSV-BOM/cutlist.png)  
+> Example Cut List/Panel Optimization
 	
-Note: If the cut list software is not able to read your dimensions properly, try changing the option "Use comma delimiter" in CSV-BOM (see below).
+> Note: If the cut list software is not able to read your dimensions properly, try changing the option "Use comma delimiter" in CSV-BOM (see below).
 
 ### Misc
 
