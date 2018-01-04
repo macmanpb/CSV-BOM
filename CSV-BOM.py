@@ -32,6 +32,7 @@ class BOMCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
 		_onlySelectedComps = False
 		_includeBoundingboxDims = True
 		_splitDims = True
+		_sortDims = False
 		_ignoreUnderscorePrefixedComps = True
 		_underscorePrefixStrip = False
 		_ignoreCompsWithoutBodies = True
@@ -50,6 +51,7 @@ class BOMCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
 				_onlySelectedComps = lastPrefs.get("onlySelComp", False)
 				_includeBoundingboxDims = lastPrefs.get("incBoundDims", True)
 				_splitDims = lastPrefs.get("splitDims", True)
+				_sortDims = lastPrefs.get("sortDims", False)
 				_ignoreUnderscorePrefixedComps = lastPrefs.get("ignoreUnderscorePrefComp", True)
 				_underscorePrefixStrip = lastPrefs.get("underscorePrefixStrip", False)
 				_ignoreCompsWithoutBodies = lastPrefs.get("ignoreCompWoBodies", True)
@@ -78,6 +80,10 @@ class BOMCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
 		ipSplitDims = inputs.addBoolValueInput(cmdId + "_splitDims", "Separate dimension", True, "", _splitDims)
 		ipSplitDims.tooltip = "Places the dimension values in separate CVS output columns."
 		ipSplitDims.isVisible = _includeBoundingboxDims
+		
+		ipsortDims = inputs.addBoolValueInput(cmdId + "_sortDims", "Sort dimensions", True, "", _sortDims)
+		ipsortDims.tooltip = "Sorts the dimensions for working with panels. The smallest value becomes the height (thickness), the next larger the width and the largest the length."
+		ipsortDims.isVisible = _includeBoundingboxDims
 
 		ipUnderscorePrefix = inputs.addBoolValueInput(cmdId + "_ignoreUnderscorePrefixedComps", 'Exclude "_"', True, "", _ignoreUnderscorePrefixedComps)
 		ipUnderscorePrefix.tooltip = 'Exclude all components there name starts with "_"'
@@ -189,9 +195,19 @@ class BOMCommandExecuteHandler(adsk.core.CommandEventHandler):
 				for k in item["boundingBox"]:
 					dim += item["boundingBox"][k]
 				if dim > 0:
-					bbX = "{0:.3f}".format(float(design.fusionUnitsManager.formatInternalValue(item["boundingBox"]["x"], defaultUnit, False)))
-					bbY = "{0:.3f}".format(float(design.fusionUnitsManager.formatInternalValue(item["boundingBox"]["y"], defaultUnit, False)))
-					bbZ = "{0:.3f}".format(float(design.fusionUnitsManager.formatInternalValue(item["boundingBox"]["z"], defaultUnit, False)))
+					dimX = float(design.fusionUnitsManager.formatInternalValue(item["boundingBox"]["x"], defaultUnit, False))
+					dimY = float(design.fusionUnitsManager.formatInternalValue(item["boundingBox"]["y"], defaultUnit, False))
+					dimZ = float(design.fusionUnitsManager.formatInternalValue(item["boundingBox"]["z"], defaultUnit, False))
+					if prefs["sortDims"]:
+						dimSorted = sorted([dimX, dimY, dimZ])
+						bbZ = "{0:.3f}".format(dimSorted[0])
+						bbX = "{0:.3f}".format(dimSorted[1])
+						bbY = "{0:.3f}".format(dimSorted[2])
+					else:
+						bbX = "{0:.3f}".format(dimX)
+						bbY = "{0:.3f}".format(dimY)
+						bbZ = "{0:.3f}".format(dimZ)
+										
 					if prefs["splitDims"]:
 						csvStr += '"' + self.replacePointDelimterOnPref(prefs["useComma"], bbX) + '";'
 						csvStr += '"' + self.replacePointDelimterOnPref(prefs["useComma"], bbY) + '";'
@@ -226,6 +242,7 @@ class BOMCommandExecuteHandler(adsk.core.CommandEventHandler):
 			"onlySelComp": inputs.itemById(cmdId + "_onlySelectedComps").value,
 			"incBoundDims": inputs.itemById(cmdId + "_includeBoundingboxDims").value,
 			"splitDims": inputs.itemById(cmdId + "_splitDims").value,
+			"sortDims": inputs.itemById(cmdId + "_sortDims").value,
 			"ignoreUnderscorePrefComp": inputs.itemById(cmdId + "_ignoreUnderscorePrefixedComps").value,
 			"underscorePrefixStrip": inputs.itemById(cmdId + "_underscorePrefixStrip").value,
 			"ignoreCompWoBodies": inputs.itemById(cmdId + "_ignoreCompsWithoutBodies").value,
