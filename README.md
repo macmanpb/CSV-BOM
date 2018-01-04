@@ -55,6 +55,14 @@ The smallest value becomes the height (thickness), the next larger the width and
 * **Include material**
 > Includes the material names as an comma seperated list for all bodies at first level whithin a component.
 
+### Cut List
+
+* **Generate Cut List**
+> Generates a file that can be used in the [cut list optimization software by Gary Darby] 
+(http://www.delphiforfun.org/Programs/CutList.htm). This is especially helpful in woodworking projects and allows to optimize panel use.
+The file is saved under the same name as the BOM but with a "_cutList.txt" ending.
+Note: If the cut list software is not able to read your dimensions properly, try changing the option "Use comma delimiter" in CSV-BOM (see below).
+
 ### Misc
 
 * **Include description**

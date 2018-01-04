@@ -16,7 +16,7 @@ ui = app.userInterface
 cmdId = "CSVBomAddInMenuEntry"
 cmdName = "CSV-BOM"
 dialogTitle = "Create BOM"
-cmdDesc = "Creates a bill of material from the browser components."
+cmdDesc = "Creates a bill of material and a cutlist from the browser components."
 cmdRes = ".//resources//CSV-BOM"
 
 # Event handler for the commandCreated event.
@@ -43,6 +43,7 @@ class BOMCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
 		_includeMass = False
 		_includeDensity = False
 		_includeMaterial = False
+		_generateCutList = False
 		_includeDesc = False
 		_useComma = False
 		if lastPrefs:
@@ -62,6 +63,7 @@ class BOMCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
 				_includeMass = lastPrefs.get("incMass", False)
 				_includeDensity = lastPrefs.get("incDensity", False)
 				_includeMaterial = lastPrefs.get("incMaterial", False)
+				_generateCutList = lastPrefs.get("generateCutList", False)
 				_includeDesc = lastPrefs.get("incDesc", False)
 				_useComma = lastPrefs.get("useComma", False)
 			except:
@@ -123,6 +125,17 @@ class BOMCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
 		ipIncludeMaterial = grpPhysicsChildren.addBoolValueInput(cmdId + "_includeMaterial", "Include material", True, "", _includeMaterial)
 		ipIncludeMaterial.tooltip = "Include component physical material"
 
+		grpCutList = inputs.addGroupCommandInput(cmdId + "_grpCutList", "Cut List")
+		if _generateCutList:
+			grpCutList.isExpanded = True
+		else:
+			grpCutList.isExpanded = False
+		grpCutList.isVisible = _includeBoundingboxDims
+		grpCutListChildren = grpCutList.children
+		
+		ipGenerateCutList = grpCutListChildren.addBoolValueInput(cmdId + "_generateCutList", "Generate Cut List", True, "", _generateCutList)
+		ipGenerateCutList.tooltip = "Generates a file for the cut list optimization program from Gary Darby."
+		
 		grpMisc = inputs.addGroupCommandInput(cmdId + "_grpMisc", "Misc")
 		if (_includeDesc or _useComma):
 			grpMisc.isExpanded = True
@@ -236,6 +249,58 @@ class BOMCommandExecuteHandler(adsk.core.CommandEventHandler):
 				csvStr += '"' + item["desc"] + '";'
 			csvStr += '\n'
 		return csvStr
+		
+	def collectCutList(self, design, bom, prefs):
+		defaultUnit = design.fusionUnitsManager.defaultLengthUnits
+		
+		# Init CutList Header
+		cutListStr = 'V2\n'
+		if prefs["useComma"]:
+			cutListStr += 'FormatSettings.decimalseparator,\n'
+		else:
+			cutListStr += 'FormatSettings.decimalseparator.\n'
+		cutListStr += '\n'
+		cutListStr += 'Required\n'
+		
+		#add parts:
+		for item in bom:
+			name = self.filterFusionCompNameInserts(item["name"])
+			if prefs["ignoreUnderscorePrefComp"] is False and prefs["underscorePrefixStrip"] is True and name[0] == '_':
+				name = name[1:]
+			# dimensions:
+			dim = 0
+			for k in item["boundingBox"]:
+				dim += item["boundingBox"][k]
+			if dim > 0:
+				dimX = float(design.fusionUnitsManager.formatInternalValue(item["boundingBox"]["x"], defaultUnit, False))
+				dimY = float(design.fusionUnitsManager.formatInternalValue(item["boundingBox"]["y"], defaultUnit, False))
+				dimZ = float(design.fusionUnitsManager.formatInternalValue(item["boundingBox"]["z"], defaultUnit, False))
+				
+				if prefs["sortDims"]:
+					dims = sorted([dimX, dimY, dimZ])
+				else:
+					dims = [dimZ, dimX, dimY]
+				
+				partStr = ' ' #leading space
+				partStr += self.replacePointDelimterOnPref(prefs["useComma"], "{0:.3f}".format(dims[1])).ljust(9) #width
+				partStr += self.replacePointDelimterOnPref(prefs["useComma"], "{0:.3f}".format(dims[2])).ljust(7) #length
+				
+				partStr += name
+				partStr += ' (thickness: ' + self.replacePointDelimterOnPref(prefs["useComma"], "{0:.3f}".format(dims[0])) + defaultUnit + ')'
+				partStr += '\n'
+				
+			else:
+				partStr = ' 0        0      ' + name + '\n'
+			
+			# add all instances of the component to the CutList:
+			quantity = int(item["instances"])
+			for i in range(0, quantity):
+				cutListStr += partStr
+		
+		# empty entry for available materials (sheets):
+		cutListStr +=  '\n' + "Available" + '\n'
+		
+		return cutListStr
 
 	def getPrefsObject(self, inputs):
 		obj = {
@@ -253,6 +318,7 @@ class BOMCommandExecuteHandler(adsk.core.CommandEventHandler):
 			"incMass": inputs.itemById(cmdId + "_includeMass").value,
 			"incDensity": inputs.itemById(cmdId + "_includeDensity").value,
 			"incMaterial": inputs.itemById(cmdId + "_includeMaterial").value,
+			"generateCutList": inputs.itemById(cmdId + "_generateCutList").value,
 			"incDesc": inputs.itemById(cmdId + "_includeCompDesc").value,
 			"useComma": inputs.itemById(cmdId + "_useComma").value
 		}
@@ -468,7 +534,15 @@ class BOMCommandExecuteHandler(adsk.core.CommandEventHandler):
 			output = open(filename, 'w')
 			output.writelines(csvStr)
 			output.close()
-			# Save last choosed options
+			
+			# save CutList:
+			if prefs["generateCutList"] and prefs["incBoundDims"]:
+				cutListStr = self.collectCutList(design, bom, prefs)
+				output = open(filename[:len(filename) - 4] + '_cutList.txt', 'w')
+				output.write(cutListStr)
+				output.close()
+			
+			# Save last chosen options
 			design.attributes.add(cmdId, "lastUsedOptions", json.dumps(prefs))
 			ui.messageBox('File written to "' + filename + '"')
 		except:
@@ -487,8 +561,12 @@ class BOMCommandInputChangedHandler(adsk.core.InputChangedEventHandler):
 		inputs = command.commandInputs
 		if inputs.itemById(cmdId + "_includeBoundingboxDims").value is True:
 			inputs.itemById(cmdId + "_splitDims").isVisible = True
+			inputs.itemById(cmdId + "_sortDims").isVisible = True
+			inputs.itemById(cmdId + "_grpCutList").isVisible = True
 		else:
 			inputs.itemById(cmdId + "_splitDims").isVisible = False
+			inputs.itemById(cmdId + "_sortDims").isVisible = False
+			inputs.itemById(cmdId + "_grpCutList").isVisible = False
 
 		if inputs.itemById(cmdId + "_ignoreUnderscorePrefixedComps").value is True:
 			inputs.itemById(cmdId + "_underscorePrefixStrip").isVisible = False
