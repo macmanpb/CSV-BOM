@@ -82,7 +82,7 @@ class BOMCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
 		ipSplitDims = inputs.addBoolValueInput(cmdId + "_splitDims", "Separate dimension", True, "", _splitDims)
 		ipSplitDims.tooltip = "Places the dimension values in separate CVS output columns."
 		ipSplitDims.isVisible = _includeBoundingboxDims
-		
+
 		ipsortDims = inputs.addBoolValueInput(cmdId + "_sortDims", "Sort dimensions", True, "", _sortDims)
 		ipsortDims.tooltip = "Sorts the dimensions for working with panels. The smallest value becomes the height (thickness), the next larger the width and the largest the length."
 		ipsortDims.isVisible = _includeBoundingboxDims
@@ -132,10 +132,10 @@ class BOMCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
 			grpCutList.isExpanded = False
 		grpCutList.isVisible = _includeBoundingboxDims
 		grpCutListChildren = grpCutList.children
-		
+
 		ipGenerateCutList = grpCutListChildren.addBoolValueInput(cmdId + "_generateCutList", "Generate Cut List", True, "", _generateCutList)
 		ipGenerateCutList.tooltip = "Generates a file for the cut list optimization program from Gary Darby."
-		
+
 		grpMisc = inputs.addGroupCommandInput(cmdId + "_grpMisc", "Misc")
 		if (_includeDesc or _useComma):
 			grpMisc.isExpanded = True
@@ -193,16 +193,16 @@ class BOMCommandExecuteHandler(adsk.core.CommandEventHandler):
 		if prefs["incDesc"]:
 			csvHeader.append("Description")
 		for k in csvHeader:
-			csvStr += k + ';'
+			csvStr += '"' + k + '",'
 		csvStr += '\n'
 		for item in bom:
 			dims = ''
 			name = self.filterFusionCompNameInserts(item["name"])
 			if prefs["ignoreUnderscorePrefComp"] is False and prefs["underscorePrefixStrip"] is True and name[0] == '_':
 				name = name[1:]
-			csvStr += '"' + name + '";"' + self.replacePointDelimterOnPref(prefs["useComma"], item["instances"]) + '";'
+			csvStr += '"' + name + '","' + self.replacePointDelimterOnPref(prefs["useComma"], item["instances"]) + '",'
 			if prefs["incVol"]:
-				csvStr += '"' + self.replacePointDelimterOnPref(prefs["useComma"], item["volume"]) + '";'
+				csvStr += '"' + self.replacePointDelimterOnPref(prefs["useComma"], item["volume"]) + '",'
 			if prefs["incBoundDims"]:
 				dim = 0
 				for k in item["boundingBox"]:
@@ -220,39 +220,39 @@ class BOMCommandExecuteHandler(adsk.core.CommandEventHandler):
 						bbX = "{0:.3f}".format(dimX)
 						bbY = "{0:.3f}".format(dimY)
 						bbZ = "{0:.3f}".format(dimZ)
-										
+
 					if prefs["splitDims"]:
-						csvStr += '"' + self.replacePointDelimterOnPref(prefs["useComma"], bbX) + '";'
-						csvStr += '"' + self.replacePointDelimterOnPref(prefs["useComma"], bbY) + '";'
-						csvStr += '"' + self.replacePointDelimterOnPref(prefs["useComma"], bbZ) + '";'
+						csvStr += '"' + self.replacePointDelimterOnPref(prefs["useComma"], bbX) + '",'
+						csvStr += '"' + self.replacePointDelimterOnPref(prefs["useComma"], bbY) + '",'
+						csvStr += '"' + self.replacePointDelimterOnPref(prefs["useComma"], bbZ) + '",'
 					else:
 						dims += '"' + self.replacePointDelimterOnPref(prefs["useComma"], bbX) + ' x '
 						dims += self.replacePointDelimterOnPref(prefs["useComma"], bbY) + ' x '
 						dims += self.replacePointDelimterOnPref(prefs["useComma"], bbZ)
-						csvStr += dims + '";'
+						csvStr += dims + '",'
 				else:
 					if prefs["splitDims"]:
-						csvStr += "0" + ';'
-						csvStr += "0" + ';'
-						csvStr += "0" + ';'
+						csvStr += "0" + ','
+						csvStr += "0" + ','
+						csvStr += "0" + ','
 					else:
-						csvStr += "0" + ';'
+						csvStr += "0" + ','
 			if prefs["incArea"]:
-				csvStr += '"' + self.replacePointDelimterOnPref(prefs["useComma"], "{0:.2f}".format(item["area"])) + '";'
+				csvStr += '"' + self.replacePointDelimterOnPref(prefs["useComma"], "{0:.2f}".format(item["area"])) + '",'
 			if prefs["incMass"]:
-				csvStr += '"' + self.replacePointDelimterOnPref(prefs["useComma"], "{0:.5f}".format(item["mass"])) + '";'
+				csvStr += '"' + self.replacePointDelimterOnPref(prefs["useComma"], "{0:.5f}".format(item["mass"])) + '",'
 			if prefs["incDensity"]:
-				csvStr += '"' + self.replacePointDelimterOnPref(prefs["useComma"], "{0:.5f}".format(item["density"])) + '";'
+				csvStr += '"' + self.replacePointDelimterOnPref(prefs["useComma"], "{0:.5f}".format(item["density"])) + '",'
 			if prefs["incMaterial"]:
-				csvStr += '"' + item["material"] + '";'
+				csvStr += '"' + item["material"] + '",'
 			if prefs["incDesc"]:
-				csvStr += '"' + item["desc"] + '";'
+				csvStr += '"' + item["desc"] + '",'
 			csvStr += '\n'
 		return csvStr
-		
+
 	def collectCutList(self, design, bom, prefs):
 		defaultUnit = design.fusionUnitsManager.defaultLengthUnits
-		
+
 		# Init CutList Header
 		cutListStr = 'V2\n'
 		if prefs["useComma"]:
@@ -261,7 +261,7 @@ class BOMCommandExecuteHandler(adsk.core.CommandEventHandler):
 			cutListStr += 'FormatSettings.decimalseparator.\n'
 		cutListStr += '\n'
 		cutListStr += 'Required\n'
-		
+
 		#add parts:
 		for item in bom:
 			name = self.filterFusionCompNameInserts(item["name"])
@@ -275,31 +275,31 @@ class BOMCommandExecuteHandler(adsk.core.CommandEventHandler):
 				dimX = float(design.fusionUnitsManager.formatInternalValue(item["boundingBox"]["x"], defaultUnit, False))
 				dimY = float(design.fusionUnitsManager.formatInternalValue(item["boundingBox"]["y"], defaultUnit, False))
 				dimZ = float(design.fusionUnitsManager.formatInternalValue(item["boundingBox"]["z"], defaultUnit, False))
-				
+
 				if prefs["sortDims"]:
 					dims = sorted([dimX, dimY, dimZ])
 				else:
 					dims = [dimZ, dimX, dimY]
-				
-				partStr = ' ' #leading space
-				partStr += self.replacePointDelimterOnPref(prefs["useComma"], "{0:.3f}".format(dims[1])).ljust(9) #width
-				partStr += self.replacePointDelimterOnPref(prefs["useComma"], "{0:.3f}".format(dims[2])).ljust(7) #length
-				
+
+				partStr = ' '  # leading space
+				partStr += self.replacePointDelimterOnPref(prefs["useComma"], "{0:.3f}".format(dims[1])).ljust(9)  # width
+				partStr += self.replacePointDelimterOnPref(prefs["useComma"], "{0:.3f}".format(dims[2])).ljust(7)  # length
+
 				partStr += name
 				partStr += ' (thickness: ' + self.replacePointDelimterOnPref(prefs["useComma"], "{0:.3f}".format(dims[0])) + defaultUnit + ')'
 				partStr += '\n'
-				
+
 			else:
 				partStr = ' 0        0      ' + name + '\n'
-			
+
 			# add all instances of the component to the CutList:
 			quantity = int(item["instances"])
 			for i in range(0, quantity):
 				cutListStr += partStr
-		
+
 		# empty entry for available materials (sheets):
-		cutListStr +=  '\n' + "Available" + '\n'
-		
+		cutListStr += '\n' + "Available" + '\n'
+
 		return cutListStr
 
 	def getPrefsObject(self, inputs):
@@ -334,7 +334,7 @@ class BOMCommandExecuteHandler(adsk.core.CommandEventHandler):
 	# Calculates a tight bounding box around the input body.  An optional
 	# tolerance argument is available.  This specificies the tolerance in
 	# centimeters.  If not provided the best existing display mesh is used.
-	def calculateTightBoundingBox(self, body, tolerance = 0):
+	def calculateTightBoundingBox(self, body, tolerance=0):
 		try:
 			# If the tolerance is zero, use the best display mesh available.
 			if tolerance <= 0:
@@ -374,7 +374,7 @@ class BOMCommandExecuteHandler(adsk.core.CommandEventHandler):
 			return(adsk.core.BoundingBox3D.create(smallPnt, largePnt))
 		except:
 			# An error occurred so return None.
-			return(None)
+			return None
 
 	def getBodiesBoundingBox(self, bodies):
 		minPointX = maxPointX = minPointY = maxPointY = minPointZ = maxPointZ = 0
@@ -382,6 +382,8 @@ class BOMCommandExecuteHandler(adsk.core.CommandEventHandler):
 		for body in bodies:
 			if body.isSolid:
 				bb = self.calculateTightBoundingBox(body, 0)
+				if not bb:
+					return None
 				if not minPointX or bb.minPoint.x < minPointX:
 					minPointX = bb.minPoint.x
 				if not maxPointX or bb.maxPoint.x > maxPointX:
@@ -399,7 +401,6 @@ class BOMCommandExecuteHandler(adsk.core.CommandEventHandler):
 			"y": maxPointY - minPointY,
 			"z": maxPointZ - minPointZ
 		}
-
 
 	def getPhysicsArea(self, bodies):
 		area = 0
@@ -518,12 +519,18 @@ class BOMCommandExecuteHandler(adsk.core.CommandEventHandler):
 
 					if jj == len(bom):
 						# Add this component to the BOM
+						bb = self.getBodiesBoundingBox(comp.bRepBodies)
+						if not bb:
+							if ui:
+								ui.messageBox('Not all Fusion modules are loaded yet, please click on the root component to load them and try again.')
+							return
+
 						bom.append({
 							"component": comp,
 							"name": comp.name,
 							"instances": 1,
 							"volume": self.getBodiesVolume(comp.bRepBodies),
-							"boundingBox": self.getBodiesBoundingBox(comp.bRepBodies),
+							"boundingBox": bb,
 							"area": self.getPhysicsArea(comp.bRepBodies),
 							"mass": self.getPhysicalMass(comp.bRepBodies),
 							"density": self.getPhysicalDensity(comp.bRepBodies),
@@ -534,14 +541,14 @@ class BOMCommandExecuteHandler(adsk.core.CommandEventHandler):
 			output = open(filename, 'w')
 			output.writelines(csvStr)
 			output.close()
-			
+
 			# save CutList:
 			if prefs["generateCutList"] and prefs["incBoundDims"]:
 				cutListStr = self.collectCutList(design, bom, prefs)
 				output = open(filename[:len(filename) - 4] + '_cutList.txt', 'w')
 				output.write(cutListStr)
 				output.close()
-			
+
 			# Save last chosen options
 			design.attributes.add(cmdId, "lastUsedOptions", json.dumps(prefs))
 			ui.messageBox('File written to "' + filename + '"')
