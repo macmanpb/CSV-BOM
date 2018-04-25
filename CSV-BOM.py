@@ -374,7 +374,7 @@ class BOMCommandExecuteHandler(adsk.core.CommandEventHandler):
 			return(adsk.core.BoundingBox3D.create(smallPnt, largePnt))
 		except:
 			# An error occurred so return None.
-			return(None)
+			return None
 
 	def getBodiesBoundingBox(self, bodies):
 		minPointX = maxPointX = minPointY = maxPointY = minPointZ = maxPointZ = 0
@@ -382,6 +382,8 @@ class BOMCommandExecuteHandler(adsk.core.CommandEventHandler):
 		for body in bodies:
 			if body.isSolid:
 				bb = self.calculateTightBoundingBox(body, 0)
+				if not bb:
+					return None
 				if not minPointX or bb.minPoint.x < minPointX:
 					minPointX = bb.minPoint.x
 				if not maxPointX or bb.maxPoint.x > maxPointX:
@@ -399,7 +401,6 @@ class BOMCommandExecuteHandler(adsk.core.CommandEventHandler):
 			"y": maxPointY - minPointY,
 			"z": maxPointZ - minPointZ
 		}
-
 
 	def getPhysicsArea(self, bodies):
 		area = 0
@@ -518,12 +519,18 @@ class BOMCommandExecuteHandler(adsk.core.CommandEventHandler):
 
 					if jj == len(bom):
 						# Add this component to the BOM
+						bb = self.getBodiesBoundingBox(comp.bRepBodies)
+						if not bb:
+							if ui:
+								ui.messageBox('Not all Fusion modules are loaded yet, please click on the root component to load them and try again.')
+							return
+
 						bom.append({
 							"component": comp,
 							"name": comp.name,
 							"instances": 1,
 							"volume": self.getBodiesVolume(comp.bRepBodies),
-							"boundingBox": self.getBodiesBoundingBox(comp.bRepBodies),
+							"boundingBox": bb,
 							"area": self.getPhysicsArea(comp.bRepBodies),
 							"mass": self.getPhysicalMass(comp.bRepBodies),
 							"density": self.getPhysicalDensity(comp.bRepBodies),
