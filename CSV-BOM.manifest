@@ -6,7 +6,7 @@
 	"description":	{
 		"":	"Generates BOM output in CSV format. Several options are provided."
 	},
-	"version":	"rel-0-7-0",
+	"version":	"rel-1-0-0",
 	"runOnStartup":	true,
 	"supportedOS":	"windows|mac",
 	"editEnabled":	false
