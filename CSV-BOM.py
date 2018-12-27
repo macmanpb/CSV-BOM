@@ -239,13 +239,13 @@ class BOMCommandExecuteHandler(adsk.core.CommandEventHandler):
 						dimZ = design.fusionUnitsManager.formatInternalValue(item["boundingBox"]["z"], defaultUnit, False)
 
 						if prefs["splitDims"]:
-							csvStr += '"' + dimX + '",'
-							csvStr += '"' + dimY + '",'
-							csvStr += '"' + dimZ + '",'
+							csvStr += '"' + dimX.replace('"', '""') + '",'
+							csvStr += '"' + dimY.replace('"', '""') + '",'
+							csvStr += '"' + dimZ.replace('"', '""') + '",'
 						else:
-							dims += '"' + dimX + ' x '
-							dims += dimY + ' x '
-							dims += dimZ
+							dims += '"' + dimX.replace('"', '""') + ' x '
+							dims += dimY.replace('"', '""') + ' x '
+							dims += dimZ.replace('"', '""')
 							csvStr += dims + '",'						
 				else:
 					if prefs["splitDims"]:
