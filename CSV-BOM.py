@@ -169,6 +169,19 @@ class BOMCommandExecuteHandler(adsk.core.CommandEventHandler):
 			return str(value).replace(".", ",")
 		return str(value)
 
+	def convertToFloat(self, fraction_string):
+		try:
+			return float(fraction_string)
+		except ValueError:
+			num, denom = fraction_string.split('/')
+			try:
+				leading, num = num.split(' ')
+				whole = float(leading)
+			except ValueError:
+				whole = 0
+			frac = float(num) / float(denom)
+			return whole - frac if whole < 0 else whole + frac
+
 	def collectData(self, design, bom, prefs):
 		csvStr = ''
 		defaultUnit = design.fusionUnitsManager.defaultLengthUnits
@@ -208,9 +221,9 @@ class BOMCommandExecuteHandler(adsk.core.CommandEventHandler):
 				for k in item["boundingBox"]:
 					dim += item["boundingBox"][k]
 				if dim > 0:
-					dimX = float(design.fusionUnitsManager.formatInternalValue(item["boundingBox"]["x"], defaultUnit, False))
-					dimY = float(design.fusionUnitsManager.formatInternalValue(item["boundingBox"]["y"], defaultUnit, False))
-					dimZ = float(design.fusionUnitsManager.formatInternalValue(item["boundingBox"]["z"], defaultUnit, False))
+					dimX = self.convertToFloat(design.fusionUnitsManager.formatInternalValue(item["boundingBox"]["x"], defaultUnit, False))
+					dimY = self.convertToFloat(design.fusionUnitsManager.formatInternalValue(item["boundingBox"]["y"], defaultUnit, False))
+					dimZ = self.convertToFloat(design.fusionUnitsManager.formatInternalValue(item["boundingBox"]["z"], defaultUnit, False))
 					if prefs["sortDims"]:
 						dimSorted = sorted([dimX, dimY, dimZ])
 						bbZ = "{0:.3f}".format(dimSorted[0])
@@ -272,9 +285,9 @@ class BOMCommandExecuteHandler(adsk.core.CommandEventHandler):
 			for k in item["boundingBox"]:
 				dim += item["boundingBox"][k]
 			if dim > 0:
-				dimX = float(design.fusionUnitsManager.formatInternalValue(item["boundingBox"]["x"], defaultUnit, False))
-				dimY = float(design.fusionUnitsManager.formatInternalValue(item["boundingBox"]["y"], defaultUnit, False))
-				dimZ = float(design.fusionUnitsManager.formatInternalValue(item["boundingBox"]["z"], defaultUnit, False))
+				dimX = self.convertToFloat(design.fusionUnitsManager.formatInternalValue(item["boundingBox"]["x"], defaultUnit, False))
+				dimY = self.convertToFloat(design.fusionUnitsManager.formatInternalValue(item["boundingBox"]["y"], defaultUnit, False))
+				dimZ = self.convertToFloat(design.fusionUnitsManager.formatInternalValue(item["boundingBox"]["z"], defaultUnit, False))
 
 				if prefs["sortDims"]:
 					dims = sorted([dimX, dimY, dimZ])
